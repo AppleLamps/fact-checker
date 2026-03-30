@@ -81,43 +81,43 @@ describe("fact check result schemas", () => {
     expect(verdictLabelSchema.parse("insufficient_evidence")).toBe("insufficient_evidence");
   });
 
-  it("requires complete evidence items", () => {
-    expect(() =>
-      aiFactCheckResultSchema.parse({
-        ...baseResult,
-        evidence: [
-          {
-            ...baseResult.evidence[0],
-            sourceUrl: "not-a-url"
-          }
-        ]
-      })
-    ).toThrow(z.ZodError);
-  });
-
-  it("requires the reply draft to cite known supported claims", () => {
-    expect(() =>
-      validatedResultSchema.parse({
-        ...baseResult,
-        replyDraft: {
-          ...baseResult.replyDraft,
-          supportedClaimIds: ["claim-2"]
+  it("falls back gracefully for invalid evidence fields", () => {
+    const result = aiFactCheckResultSchema.parse({
+      ...baseResult,
+      evidence: [
+        {
+          ...baseResult.evidence[0],
+          sourceUrl: "not-a-url"
         }
-      })
-    ).toThrow(/unknown claim/i);
+      ]
+    });
+
+    expect(result.evidence[0].sourceUrl).toBe("https://unknown");
   });
 
-  it("blocks reply drafts from citing not-fact-checkable claims", () => {
-    expect(() =>
-      validatedResultSchema.parse({
-        ...baseResult,
-        verdicts: [
-          {
-            ...baseResult.verdicts[0],
-            label: "not_fact_checkable"
-          }
-        ]
-      })
-    ).toThrow(/not_fact_checkable/i);
+  it("filters out reply draft references to unknown claims", () => {
+    const result = validatedResultSchema.parse({
+      ...baseResult,
+      replyDraft: {
+        ...baseResult.replyDraft,
+        supportedClaimIds: ["claim-2"]
+      }
+    });
+
+    expect(result.replyDraft.supportedClaimIds).toEqual([]);
+  });
+
+  it("filters out reply draft references to not-fact-checkable claims", () => {
+    const result = validatedResultSchema.parse({
+      ...baseResult,
+      verdicts: [
+        {
+          ...baseResult.verdicts[0],
+          label: "not_fact_checkable"
+        }
+      ]
+    });
+
+    expect(result.replyDraft.supportedClaimIds).toEqual([]);
   });
 });

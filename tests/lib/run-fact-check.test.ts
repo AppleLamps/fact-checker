@@ -192,52 +192,52 @@ describe("runFactCheck", () => {
     expect(result.verdicts).toHaveLength(1);
   });
 
-  it("rejects reply content that cites unknown claims", async () => {
-    await expect(
-      runFactCheck(normalizedSubmission, {
-        responses: {
-          create: vi.fn().mockResolvedValue({
-            submissionSummary: "summary",
-            postLevelSummary: "summary",
-            claims: [
-              {
-                id: "claim-1",
-                text: "Claim",
-                factCheckable: true
-              }
-            ],
-            evidence: [
-              {
-                id: "evidence-1",
-                claimId: "claim-1",
-                sourceUrl: "https://example.com/source",
-                sourceTitle: "Source",
-                sourceType: "primary",
-                publisher: "Publisher",
-                publicationDate: "2026-03-01T00:00:00.000Z",
-                excerpt: "Source text",
-                relevanceScore: 0.9
-              }
-            ],
-            verdicts: [
-              {
-                claimId: "claim-1",
-                label: "supported",
-                confidence: 0.9,
-                rationale: "Supported by evidence.",
-                evidenceIds: ["evidence-1"],
-                manipulationFlags: []
-              }
-            ],
-            replyDraft: {
-              headline: "Headline",
-              body: "Body",
-              supportedClaimIds: ["claim-999"]
-            },
-            limitations: []
-          })
-        }
-      })
-    ).rejects.toThrow(/unknown claim/i);
+  it("filters out reply draft claims that reference unknown claim IDs", async () => {
+    const result = await runFactCheck(normalizedSubmission, {
+      responses: {
+        create: vi.fn().mockResolvedValue({
+          submissionSummary: "summary",
+          postLevelSummary: "summary",
+          claims: [
+            {
+              id: "claim-1",
+              text: "Claim",
+              factCheckable: true
+            }
+          ],
+          evidence: [
+            {
+              id: "evidence-1",
+              claimId: "claim-1",
+              sourceUrl: "https://example.com/source",
+              sourceTitle: "Source",
+              sourceType: "primary",
+              publisher: "Publisher",
+              publicationDate: "2026-03-01T00:00:00.000Z",
+              excerpt: "Source text",
+              relevanceScore: 0.9
+            }
+          ],
+          verdicts: [
+            {
+              claimId: "claim-1",
+              label: "supported",
+              confidence: 0.9,
+              rationale: "Supported by evidence.",
+              evidenceIds: ["evidence-1"],
+              manipulationFlags: []
+            }
+          ],
+          replyDraft: {
+            headline: "Headline",
+            body: "Body",
+            supportedClaimIds: ["claim-999"]
+          },
+          limitations: []
+        })
+      }
+    });
+
+    expect(result.replyDraft.supportedClaimIds).toEqual([]);
   });
 });

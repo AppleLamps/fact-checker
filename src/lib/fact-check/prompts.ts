@@ -37,7 +37,11 @@ export function buildFactCheckPrompt(submission: NormalizedSubmission) {
     "",
     "Each claim object must include: id, text, factCheckable.",
     "Each evidence object must include: id, claimId, sourceUrl, sourceTitle, sourceType, publisher, publicationDate, excerpt, relevanceScore.",
+    "sourceType must be one of: primary, secondary, official_dataset, archival, user_supplied.",
+    "publicationDate must be ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ (e.g. 2026-03-01T00:00:00.000Z).",
     "Each verdict must include: claimId, label, confidence, rationale, evidenceIds, manipulationFlags.",
+    "label must be one of: supported, unsupported, misleading_by_omission, missing_context, outdated, mixed_evidence, not_fact_checkable, insufficient_evidence.",
+    "limitations must be an array of strings.",
     "replyDraft must include: headline, body, supportedClaimIds.",
     "The reply_draft must cite only supportedClaimIds backed by verified evidence."
   ].join("\n");

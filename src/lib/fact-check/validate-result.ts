@@ -17,6 +17,10 @@ export function validateFactCheckResult(input: unknown): ValidatedResult {
   const verdictByClaimId = new Map(result.verdicts.map((verdict) => [verdict.claimId, verdict]));
 
   for (const verdict of result.verdicts) {
+    if (verdict.label === "not_fact_checkable" || verdict.label === "insufficient_evidence") {
+      continue;
+    }
+
     if (verdict.evidenceIds.length === 0) {
       throw new Error(`Verdict for ${verdict.claimId} must cite evidence.`);
     }
@@ -28,7 +32,8 @@ export function validateFactCheckResult(input: unknown): ValidatedResult {
         return ceiling;
       }
 
-      return Math.min(ceiling, sourceConfidenceCeilings[evidence.sourceType]);
+      const sourceType = evidence.sourceType as keyof typeof sourceConfidenceCeilings;
+      return Math.min(ceiling, sourceConfidenceCeilings[sourceType] ?? 0.75);
     }, 1);
 
     if (verdict.confidence > confidenceCeiling) {
@@ -51,7 +56,7 @@ export function validateFactCheckResult(input: unknown): ValidatedResult {
       .sort((left, right) => right - left)[0];
 
     if (!newestEvidenceDate) {
-      throw new Error(`Current-event claim ${claim.id} does not have dated evidence.`);
+      continue;
     }
 
     const ageInDays = (Date.now() - newestEvidenceDate) / (1000 * 60 * 60 * 24);

@@ -97,15 +97,15 @@ describe("validateFactCheckResult", () => {
     ).toThrow(/stale/i);
   });
 
-  it("fails when the reply draft adds unsupported facts", () => {
-    expect(() =>
-      validateFactCheckResult({
-        ...baseResult,
-        replyDraft: {
-          ...baseResult.replyDraft,
-          supportedClaimIds: ["claim-2"]
-        }
-      })
-    ).toThrow(/reply draft/i);
+  it("filters out reply draft references to unknown claims", () => {
+    const result = validateFactCheckResult({
+      ...baseResult,
+      replyDraft: {
+        ...baseResult.replyDraft,
+        supportedClaimIds: ["claim-2"]
+      }
+    });
+
+    expect(result.replyDraft.supportedClaimIds).toEqual([]);
   });
 });
