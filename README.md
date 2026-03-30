@@ -1,6 +1,7 @@
 # Fact Checker
 
 Evidence-first fact checking for X posts, text, and screenshots. Built for Vercel, the app returns two outputs for every submission:
+
 - a neutral fact-check report with per-claim verdicts and sourced evidence
 - a separate evidence-backed reply draft
 
@@ -49,6 +50,7 @@ npm run build
 ## Current State
 
 Implemented:
+
 - landing page with submission form (X URL or pasted text)
 - shared Zod schemas for submissions, evidence, verdicts, and reply drafts
 - submission intake, status, and processing API routes
@@ -62,6 +64,7 @@ Implemented:
 - Playwright end-to-end tests and Vitest unit tests
 
 Not yet implemented:
+
 - durable background job infrastructure for long-running production workloads
 - screenshot upload transport (OCR adapter is a no-op stub)
 - Vercel deployment wiring
