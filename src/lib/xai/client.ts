@@ -5,21 +5,25 @@ type ResponseInputMessage = {
 
 type ResponseTool =
   | {
-      type: "web_search";
-      search_context_size?: "low" | "medium" | "high";
-    }
-  | {
-      type: "x_search";
-      from_date?: string;
-      to_date?: string;
-      allowed_x_handles?: string[];
-      excluded_x_handles?: string[];
-      enable_image_understanding?: boolean;
-      enable_video_understanding?: boolean;
-    }
-  | {
-      type: "code_execution";
+    type: "web_search";
+    filters?: {
+      allowed_domains?: string[];
+      excluded_domains?: string[];
     };
+    enable_image_understanding?: boolean;
+  }
+  | {
+    type: "x_search";
+    from_date?: string;
+    to_date?: string;
+    allowed_x_handles?: string[];
+    excluded_x_handles?: string[];
+    enable_image_understanding?: boolean;
+    enable_video_understanding?: boolean;
+  }
+  | {
+    type: "code_execution";
+  };
 
 type ResponseCreateInput = {
   model?: string;
@@ -28,25 +32,20 @@ type ResponseCreateInput = {
   };
   input: ResponseInputMessage[];
   tools?: ResponseTool[];
-  text?: {
-    format?: {
-      type: "json_object";
-    };
-  };
 };
 
 type ResponseCreateOutput =
   | Record<string, unknown>
   | {
-      output_text?: string;
-      output?: Array<{
+    output_text?: string;
+    output?: Array<{
+      type: string;
+      content?: Array<{
         type: string;
-        content?: Array<{
-          type: string;
-          text?: string;
-        }>;
+        text?: string;
       }>;
-    };
+    }>;
+  };
 
 export type XAIResponsesClient = {
   create: (input: ResponseCreateInput) => Promise<ResponseCreateOutput>;

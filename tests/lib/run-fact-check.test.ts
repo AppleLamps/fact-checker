@@ -61,7 +61,7 @@ describe("runFactCheck", () => {
     });
 
     expect(call).toHaveBeenCalledOnce();
-    expect(call.mock.calls[0][0].model).toBe("grok-4.20-multi-agent-beta-0309");
+    expect(call.mock.calls[0][0].model).toBe("grok-4.20-multi-agent");
     expect(call.mock.calls[0][0].input[0].content).toContain("Return only JSON");
     expect(call.mock.calls[0][0].input[0].content).toContain("reply_draft");
     expect(call.mock.calls[0][0].input[0].content).toContain("verified evidence");
@@ -121,11 +121,7 @@ describe("runFactCheck", () => {
       }
     });
 
-    expect(call.mock.calls[0][0].text).toEqual({
-      format: {
-        type: "json_object"
-      }
-    });
+    expect(call.mock.calls[0][0].text).toBeUndefined();
     expect(call.mock.calls[0][0].input).toEqual([
       expect.objectContaining({
         role: "user"

@@ -20,7 +20,7 @@ Evidence-first fact checking for X posts, text, and screenshots. Built for Verce
 Copy `.env.example` to `.env.local` and fill in:
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| -------- | -------- | ----------- |
 | `XAI_API_KEY` | Yes | xAI API key for the Responses API |
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
 | `XAI_MODEL` | No | Override the xAI model (default: `grok-4.20-multi-agent-beta-0309`) |

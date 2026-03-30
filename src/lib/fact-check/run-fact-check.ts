@@ -13,7 +13,7 @@ export async function runFactCheck(
   client: XAIClient = createXAIClient()
 ) {
   const response = await client.responses.create({
-    model: process.env.XAI_MODEL ?? "grok-4.20-multi-agent-beta-0309",
+    model: process.env.XAI_MODEL ?? "grok-4.20-multi-agent",
     reasoning: {
       effort: "medium"
     },
@@ -26,18 +26,13 @@ export async function runFactCheck(
     tools: [
       {
         type: "web_search",
-        search_context_size: "high"
+        enable_image_understanding: true
       },
       {
         type: "x_search",
         enable_image_understanding: true
       }
-    ],
-    text: {
-      format: {
-        type: "json_object"
-      }
-    }
+    ]
   });
 
   const parsedResponse = parseJSONResponse(response);
