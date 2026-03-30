@@ -1,4 +1,4 @@
-import type { ResultRecord } from "@/lib/db/memory";
+import type { ResultRecord } from "@/lib/db/types";
 import { EvidenceTable } from "./evidence-table";
 import { ReplyDraft } from "./reply-draft";
 

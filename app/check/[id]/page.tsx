@@ -38,8 +38,8 @@ export default async function CheckPage({ params, searchParams }: CheckPageProps
     process.env.FACT_CHECKER_E2E_AUTOCOMPLETE === "1"
       ? resolvedSearchParams?.mockScenario
       : undefined;
-  const submission = getSubmissionById(id);
-  const result = getResultBySubmissionId(id);
+  const submission = await getSubmissionById(id);
+  const result = await getResultBySubmissionId(id);
 
   if (!submission && mockScenario) {
     return (

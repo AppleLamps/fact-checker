@@ -1,15 +1,57 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { resetMemoryStore } from "../../src/lib/db/memory";
-import { createSubmissionRecord, getSubmissionById } from "../../src/lib/repositories/submissions";
+import type { ResultRecord, SubmissionRecord } from "../../src/lib/db/types";
+import {
+  createSubmissionRecord,
+  getSubmissionById,
+  setSubmissionRepositoryAdapter
+} from "../../src/lib/repositories/submissions";
+import { setResultRepositoryAdapter } from "../../src/lib/repositories/results";
 
 vi.mock("../../src/lib/fact-check/run-fact-check", () => ({
   runFactCheck: vi.fn()
 }));
 
 describe("submission processing routes", () => {
+  const submissionStore = new Map<string, SubmissionRecord>();
+  const resultStore = new Map<string, ResultRecord>();
+
   beforeEach(() => {
-    resetMemoryStore();
     vi.resetAllMocks();
+    submissionStore.clear();
+    resultStore.clear();
+    setSubmissionRepositoryAdapter({
+      async create(submission) {
+        submissionStore.set(submission.id, submission);
+        return submission;
+      },
+      async updateStatus(submissionId, status) {
+        const existing = submissionStore.get(submissionId);
+
+        if (!existing) {
+          return null;
+        }
+
+        const updated = {
+          ...existing,
+          status
+        };
+
+        submissionStore.set(submissionId, updated);
+        return updated;
+      },
+      async getById(submissionId) {
+        return submissionStore.get(submissionId) ?? null;
+      }
+    });
+    setResultRepositoryAdapter({
+      async save(result) {
+        resultStore.set(result.submissionId, result);
+        return result;
+      },
+      async getBySubmissionId(submissionId) {
+        return resultStore.get(submissionId) ?? null;
+      }
+    });
   });
 
   it("processes a queued submission and saves a result", async () => {
@@ -17,7 +59,7 @@ describe("submission processing routes", () => {
     const { GET } = await import("../../app/api/submissions/[id]/route");
     const { runFactCheck } = await import("../../src/lib/fact-check/run-fact-check");
 
-    const submission = createSubmissionRecord({
+    const submission = await createSubmissionRecord({
       inputType: "pasted_text",
       pastedText: "Claim text",
       uploadedImages: []
@@ -71,7 +113,7 @@ describe("submission processing routes", () => {
     });
 
     expect(processResponse.status).toBe(200);
-    expect(getSubmissionById(submission.id)?.status).toBe("completed");
+    expect((await getSubmissionById(submission.id))?.status).toBe("completed");
 
     const statusResponse = await GET(new Request(`http://localhost/api/submissions/${submission.id}`), {
       params: Promise.resolve({ id: submission.id })

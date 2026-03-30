@@ -1,7 +1,40 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import type { SubmissionRecord } from "../../src/lib/db/types";
+import { setSubmissionRepositoryAdapter } from "../../src/lib/repositories/submissions";
 import { POST } from "../../app/api/submissions/route";
 
+const submissionStore = new Map<string, SubmissionRecord>();
+
+setSubmissionRepositoryAdapter({
+  async create(submission) {
+    submissionStore.set(submission.id, submission);
+    return submission;
+  },
+  async updateStatus(submissionId, status) {
+    const existing = submissionStore.get(submissionId);
+
+    if (!existing) {
+      return null;
+    }
+
+    const updated = {
+      ...existing,
+      status
+    };
+
+    submissionStore.set(submissionId, updated);
+    return updated;
+  },
+  async getById(submissionId) {
+    return submissionStore.get(submissionId) ?? null;
+  }
+});
+
 describe("POST /api/submissions", () => {
+  beforeEach(() => {
+    submissionStore.clear();
+  });
+
   it("accepts a url-only submission", async () => {
     const response = await POST(
       new Request("http://localhost/api/submissions", {

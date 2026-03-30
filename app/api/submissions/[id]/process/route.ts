@@ -13,7 +13,7 @@ export const maxDuration = 60;
 
 export async function POST(_request: Request, context: RouteContext) {
   const { id } = await context.params;
-  const submission = getSubmissionById(id);
+  const submission = await getSubmissionById(id);
 
   if (!submission) {
     return Response.json(
@@ -26,28 +26,28 @@ export async function POST(_request: Request, context: RouteContext) {
     );
   }
 
-  const existingResult = getResultBySubmissionId(id);
+  const existingResult = await getResultBySubmissionId(id);
 
   if (existingResult) {
     return Response.json({
-      submission: getSubmissionById(id),
+      submission: await getSubmissionById(id),
       result: existingResult
     });
   }
 
   try {
-    updateSubmissionStatus(id, "processing");
+    await updateSubmissionStatus(id, "processing");
     const normalizedSubmission = await normalizeSubmissionInput(submission);
     const result = await runFactCheck(normalizedSubmission);
-    saveResultRecord(id, result);
-    const updatedSubmission = updateSubmissionStatus(id, "completed");
+    await saveResultRecord(id, result);
+    const updatedSubmission = await updateSubmissionStatus(id, "completed");
 
     return Response.json({
       submission: updatedSubmission,
       result
     });
   } catch (error) {
-    const updatedSubmission = updateSubmissionStatus(id, "failed");
+    const updatedSubmission = await updateSubmissionStatus(id, "failed");
 
     return Response.json(
       {

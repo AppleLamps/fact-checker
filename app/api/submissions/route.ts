@@ -7,7 +7,7 @@ import { updateSubmissionStatus } from "@/lib/repositories/submissions";
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
-    const submission = createSubmissionRecord(payload);
+    const submission = await createSubmissionRecord(payload);
     const shouldMockComplete =
       process.env.FACT_CHECKER_E2E_AUTOCOMPLETE === "1" &&
       submission.inputType !== "x_url";
@@ -17,8 +17,8 @@ export async function POST(request: Request) {
         : "completed";
 
     if (shouldMockComplete) {
-      saveResultRecord(submission.id, buildMockResult(submission));
-      updateSubmissionStatus(submission.id, "completed");
+      await saveResultRecord(submission.id, buildMockResult(submission));
+      await updateSubmissionStatus(submission.id, "completed");
     }
 
     return Response.json(

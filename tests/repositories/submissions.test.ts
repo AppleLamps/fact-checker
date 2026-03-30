@@ -1,22 +1,82 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { resetMemoryStore } from "../../src/lib/db/memory";
 import {
   createSubmissionRecord,
   updateSubmissionStatus,
-  getSubmissionById
+  getSubmissionById,
+  setSubmissionRepositoryAdapter
 } from "../../src/lib/repositories/submissions";
 import {
   saveResultRecord,
-  getResultBySubmissionId
+  getResultBySubmissionId,
+  setResultRepositoryAdapter
 } from "../../src/lib/repositories/results";
+import type {
+  ResultRecord,
+  SubmissionRecord
+} from "../../src/lib/db/types";
+
+type TestStore = {
+  submissions: Map<string, SubmissionRecord>;
+  results: Map<string, ResultRecord>;
+};
+
+function createTestStore(): TestStore {
+  return {
+    submissions: new Map<string, SubmissionRecord>(),
+    results: new Map<string, ResultRecord>()
+  };
+}
+
+function createTestAdapters(store: TestStore) {
+  return {
+    submissions: {
+      async create(submission: SubmissionRecord) {
+        store.submissions.set(submission.id, submission);
+        return submission;
+      },
+      async updateStatus(submissionId: string, status: SubmissionRecord["status"]) {
+        const existing = store.submissions.get(submissionId);
+
+        if (!existing) {
+          return null;
+        }
+
+        const updated = {
+          ...existing,
+          status
+        };
+
+        store.submissions.set(submissionId, updated);
+        return updated;
+      },
+      async getById(submissionId: string) {
+        return store.submissions.get(submissionId) ?? null;
+      }
+    },
+    results: {
+      async save(result: ResultRecord) {
+        store.results.set(result.submissionId, result);
+        return result;
+      },
+      async getBySubmissionId(submissionId: string) {
+        return store.results.get(submissionId) ?? null;
+      }
+    }
+  };
+}
 
 describe("submission and result repositories", () => {
+  let store: TestStore;
+
   beforeEach(() => {
-    resetMemoryStore();
+    store = createTestStore();
+    const adapters = createTestAdapters(store);
+    setSubmissionRepositoryAdapter(adapters.submissions);
+    setResultRepositoryAdapter(adapters.results);
   });
 
-  it("creates a submission", () => {
-    const submission = createSubmissionRecord({
+  it("creates a submission", async () => {
+    const submission = await createSubmissionRecord({
       inputType: "x_url",
       xUrl: "https://x.com/example/status/123",
       uploadedImages: []
@@ -26,26 +86,26 @@ describe("submission and result repositories", () => {
     expect(submission.status).toBe("queued");
   });
 
-  it("updates job status", () => {
-    const submission = createSubmissionRecord({
+  it("updates job status", async () => {
+    const submission = await createSubmissionRecord({
       inputType: "pasted_text",
       pastedText: "Claim text",
       uploadedImages: []
     });
 
-    const updated = updateSubmissionStatus(submission.id, "processing");
+    const updated = await updateSubmissionStatus(submission.id, "processing");
 
     expect(updated.status).toBe("processing");
   });
 
-  it("saves a validated result", () => {
-    const submission = createSubmissionRecord({
+  it("saves a validated result", async () => {
+    const submission = await createSubmissionRecord({
       inputType: "pasted_text",
       pastedText: "Claim text",
       uploadedImages: []
     });
 
-    const result = saveResultRecord(submission.id, {
+    const result = await saveResultRecord(submission.id, {
       submissionSummary: "summary",
       postLevelSummary: "summary",
       claims: [
@@ -89,15 +149,15 @@ describe("submission and result repositories", () => {
     expect(result.submissionId).toBe(submission.id);
   });
 
-  it("fetches result page data", () => {
-    const submission = createSubmissionRecord({
+  it("fetches result page data", async () => {
+    const submission = await createSubmissionRecord({
       inputType: "pasted_text",
       pastedText: "Claim text",
       uploadedImages: []
     });
 
-    updateSubmissionStatus(submission.id, "completed");
-    saveResultRecord(submission.id, {
+    await updateSubmissionStatus(submission.id, "completed");
+    await saveResultRecord(submission.id, {
       submissionSummary: "summary",
       postLevelSummary: "summary",
       claims: [
@@ -138,7 +198,7 @@ describe("submission and result repositories", () => {
       limitations: []
     });
 
-    expect(getSubmissionById(submission.id)?.status).toBe("completed");
-    expect(getResultBySubmissionId(submission.id)?.postLevelSummary).toBe("summary");
+    expect((await getSubmissionById(submission.id))?.status).toBe("completed");
+    expect((await getResultBySubmissionId(submission.id))?.postLevelSummary).toBe("summary");
   });
 });

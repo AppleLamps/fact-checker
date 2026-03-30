@@ -9,7 +9,7 @@ type RouteContext = {
 
 export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
-  const submission = getSubmissionById(id);
+  const submission = await getSubmissionById(id);
 
   if (!submission) {
     return Response.json(
@@ -24,6 +24,6 @@ export async function GET(_request: Request, context: RouteContext) {
 
   return Response.json({
     submission,
-    result: getResultBySubmissionId(id)
+    result: await getResultBySubmissionId(id)
   });
 }
